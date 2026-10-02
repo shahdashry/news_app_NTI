@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:news_app/core/api/result_api.dart';
 import 'package:news_app/data/api_manger.dart';
 import 'package:news_app/data/news_model.dart';
 import 'package:news_app/view/widgets/item_card_news.dart';
@@ -12,6 +13,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Article> articles = [];
+  bool isLoading = true;
+  String? error;
+
+  @override
   void initState() {
     super.initState();
     getArticles();
@@ -21,16 +26,47 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('News')),
-      body: ListView.builder(
-        itemBuilder: (context, index) => ItemCardNew(articles: articles[index]),
-        itemCount: articles.length,
+      body: isLoading
+          ? _loadingView()
+          : error != null
+          ? errorView()
+          : _successVeiw(),
+    );
+  }
+
+  Widget _successVeiw() {
+    return ListView.builder(
+      itemBuilder: (context, index) => ItemCardNew(articles: articles[index]),
+      itemCount: articles.length,
+    );
+  }
+
+  Widget _loadingView() {
+    return Center(child: CircularProgressIndicator());
+  }
+
+  Widget errorView() {
+    return Center(
+      child: Text(
+        error ?? "Something went wrong",
+        style: TextStyle(fontSize: 30, color: Colors.red),
       ),
     );
   }
 
   getArticles() async {
-    var newsModel = await ApiManger.getNews();
-    articles = newsModel.articles ?? [];
+    var result = await ApiManger.getNews();
+
+    switch (result) {
+      case Success<NewsModel>():
+        articles = result.data.articles ?? [];
+      // setState(() {});
+
+      case Error<NewsModel>():
+        error = result.error;
+        break;
+    }
+    isLoading = false;
     setState(() {});
   }
 }

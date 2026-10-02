@@ -9,8 +9,8 @@ import 'package:news_app/view/screens/home_screen.dart';
 
 void main() async {
   var newsModel = await ApiManger.getNews();
-  log(newsModel.status ?? "");
-  log(newsModel.articles!.first.title ?? "");
+  // log(newsModel.status ?? "");
+  // log(newsModel.articles!.first.title ?? "");
 
   runApp(const NewsApp());
 }
