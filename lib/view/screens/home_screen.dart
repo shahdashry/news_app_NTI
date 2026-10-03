@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:news_app/core/api/result_api.dart';
 import 'package:news_app/data/api_manger.dart';
 import 'package:news_app/data/news_model.dart';
 import 'package:news_app/view/widgets/item_card_news.dart';
+import 'package:news_app/views_model/news_cubit.dart';
+import 'package:news_app/views_model/news_state.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,29 +15,42 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Article> articles = [];
-  bool isLoading = true;
-  String? error;
+  NewsCubit cubit = NewsCubit();
+  // List<Article> articles = [];
+  // bool isLoading = true;
+  // String? error;
 
   @override
   void initState() {
     super.initState();
-    getArticles();
+    // NewsCubit().getArticles();
+
+    // getArticles();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('News')),
-      body: isLoading
-          ? _loadingView()
-          : error != null
-          ? errorView()
-          : _successVeiw(),
+      body: BlocBuilder<NewsCubit, NewsState>(
+        bloc: NewsCubit()..getArticles(),
+        builder: (context, State) {
+          if (State is Newsloading) {
+            return _loadingView();
+          }
+          if (State is NewsSuccess) {
+            return _successVeiw(State.articles);
+          }
+          if (State is NewsError) {
+            return _errorView(State.errorMassage);
+          }
+          return _loadingView();
+        },
+      ),
     );
   }
 
-  Widget _successVeiw() {
+  Widget _successVeiw(List<Article> articles) {
     return ListView.builder(
       itemBuilder: (context, index) => ItemCardNew(articles: articles[index]),
       itemCount: articles.length,
@@ -45,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Center(child: CircularProgressIndicator());
   }
 
-  Widget errorView() {
+  Widget _errorView(String error) {
     return Center(
       child: Text(
         error ?? "Something went wrong",
@@ -54,21 +70,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  getArticles() async {
-    var result = await ApiManger.getNews();
+  // getArticles() async {
+  //   var result = await ApiManger.getNews();
 
-    switch (result) {
-      case Success<NewsModel>():
-        articles = result.data.articles ?? [];
-      // setState(() {});
+  //   switch (result) {
+  //     case Success<NewsModel>():
+  //       articles = result.data.articles ?? [];
+  //     // setState(() {});
 
-      case Error<NewsModel>():
-        error = result.error;
-        break;
-    }
-    isLoading = false;
-    setState(() {});
-  }
+  //     case Error<NewsModel>():
+  //       error = result.error;
+  //       break;
+  //   }
+  //   isLoading = false;
+  //   setState(() {});
+  // }
 }
 
 const String imagetest =
